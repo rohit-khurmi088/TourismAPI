@@ -1,0 +1,28 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "start:dev": "nodemon node server.js",
+    "start:prod": "NODE_ENV=production nodemon node server.js",
+    "debug": "ndb server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "colors": "^1.4.0",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "kill-port": "^1.6.1",
+    "mongoose": "^5.11.9",
+    "morgan": "^1.10.0",
+    "ndb": "^1.1.5",
+    "slugify": "^1.4.6",
+    "validator": "^13.5.2"
+  },
+  "devDependencies": {
+    "nodemon": "^2.0.6"
+  }
+}
