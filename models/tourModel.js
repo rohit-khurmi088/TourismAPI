@@ -97,7 +97,7 @@ const tourSchema = new mongoose.Schema({
 
     //startDates
     startDates:[Date], //Array of dates
-    
+
 },{
     //Defining Schema to get Virtual_Properties in output
     toJSON: {virtuals:true},
@@ -108,6 +108,7 @@ const tourSchema = new mongoose.Schema({
 //====================
 //virtual Property
 //====================
+//NOT SAVED IN Database
 //converting days -> weeks (duration)
 tourSchema.virtual('durationWeeks').get(function(){
     return this.duration / 7;
