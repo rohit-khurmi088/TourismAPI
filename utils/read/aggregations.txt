@@ -1,0 +1,36 @@
+//=======================
+//AGGREGIATION PIPELINES
+//=======================
+MongoDB provides three ways to perform aggregation:
+the aggregation pipeline, 
+the map-reduce function, 
+and single purpose aggregation methods.
+-> https://docs.mongodb.com/manual/reference/operator/query/
+-> https://docs.mongodb.com/manual/aggregation/
+-> https://docs.mongodb.com/manual/reference/operator/aggregation-pipeline/
+
+//PIPELINES :
+->it is a array of certain opertors executed sequentially
+-> opr 1 acts on all the documents of the collection
+-> opr 2 acts on what opr1 has done & so on...
+-> opr can be repeated
+PIPELINES => [ opr1, opr2, opr3]
+$ => pick the values up from document
+
+$sum : sums the fields
+$avg   : calculates average,  $avg: '$field'
+$min   : calculates minimum   $min: '$field'
+$max   : calculates maximum   $max: '$field'
+$sort  : sort by value        $sort: {field:1} ,1=ascending, -1=descending
+
+$match :  similar to find()
+$group : group documents based on particular field( _id:fieldToGroupBy), expects to pass an object
+$unwind:takes an array & spilt it into different documents based on some parameter 
+
+$ month: Returns the month of a date as a number between 1 and 12.
+$pull  : Returns an array of all values that result from applying an expression to each document in a group of documents that share the same group by key.
+
+$addFields: adds a new filed with specified value, $field:'$value' 
+$project: similar to select - get  only selected fields $project:{ field:1/0} 1= include  only this filed, 0= exclude only this field
+$limit : limit the number of documents, $limit: 1
+$skip  : skip certain set of documents, $skip: 1 (skips 1st doc)

@@ -1,18 +1,28 @@
 const express = require('express');
 const router = express.Router();
 
-//Importing Middleware from tourController Top
+//Importing SpecaialRoutes(Aggregation) form tourController
+const {getTourStats,getMonthlyPlan} = require('../controllers/tourController');
+
+//Importing Middleware from tourController (Top-5-Tours)
 const {aliasTopTours} = require('../controllers/tourController');
 
 //Importing controllers from tourController (CRUD)
 const {getAllTours, getTour, createTour, updateTour, deleteTour} = require('../controllers/tourController');
 
 
+//---------------(Aggregation)------------------
+//Get Tour Stats 
+router.route('/tour-stats').get(getTourStats);
 
-//Get Top-5-Cheap-Tours
+//GET Monthly Plan (by year) 
+router.route('/monthly-plan/:year').get(getMonthlyPlan);
+//------------------------------------------------
+
+//Get Top-5-Cheap-Tours (query)
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours); //CHAINING Middleware
 
-
+//------------------------------------------------
 //-----CHAINING SIMILAR ROUTES (CRUD)-----
 
 router.route('/')
