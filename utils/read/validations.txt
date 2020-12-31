@@ -1,0 +1,71 @@
+VALIDATION:
+-> checking if entered values are in right format for each field
+-> all the values are entered for required fields
+-> performed in models
+
+
+//=====================
+// BUILT-IN Validators
+//=====================
+-> String Validators
+maxlength: [val, 'message'],
+minlength: [val, 'message']
+
+match:[ regularExpression , message] //to check if input matches the given regular expression
+
+enum:{
+        values: ['val1', 'val2', 'val3'] //Select only these values
+        message: 'message'
+}
+
+-> Number Validators
+min: [val, 'message'],
+max: [val, 'message'],
+
+-> Date Validators
+min: [val, 'message'],
+max: [val, 'message'],
+
+
+//=====================
+// Custom Validators
+//=====================
+-> validator = func -> return true/false
+-> false = error
+-> true = validation correct => input can be accepted
+
+Eg: Validate if priceDiscount < price ?
+    price:{
+        type:Number,
+        required:[true, 'A Tour must have a price']
+    },
+   
+    priceDiscount: {
+        type: Number,
+        //custom validator(Check if discount<price?)
+        //this here points to the current doc - at the time of creation
+        validate: {
+            validator: function(val){
+                return val < this.price;
+            },
+            message: 'Discount price ({VALUE}) should be below regular price'
+        }
+    },
+
+
+//=================
+// npm i validator
+//=================
+-> https://github.com/validatorjs/validator.js
+-> gives methods like isAlpha etc...
+
+//validators
+const validator = require('validator');
+
+name:{
+  type:String,
+  validate: [validator.isAlpha , 'Tour name must only contain characters']
+}
+
+
+

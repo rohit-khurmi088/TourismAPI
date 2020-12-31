@@ -1,0 +1,37 @@
+//====================
+// VIRTUAL PROPERTIES
+//====================
+-> fields that we define on our schema but they are not saved in the database
+-> saves space
+-> derived from one another (Eg: conversion from miles to km) - not need to save both fields in the databse
+->not part of database => cannot be used with a query
+-> seprates businesslogic from application logic
+
+Virtual Property - containing tour duration in weeks
+//current tour duration - numbers
+
+const schema = new mongoose.Schema({
+    //duration
+    duration:{
+        type:Number,
+        required:[true, 'A Tour must have a duration']
+    },
+},{
+    //Defining Schema to get Virtual_Properties in output
+    toJSON: {virtuals:true},
+    toObject:{virtuals:true}
+});
+
+
+//====================
+//virtual Property
+//====================
+//converting days to weeks (duration)
+tourSchema.virtual('durationWeeks').get(function(){
+    return this.duration / 7;
+});
+
+
+OUTPUT:  
+"duration": 5,
+"durationWeeks": 0.7142857142857143,

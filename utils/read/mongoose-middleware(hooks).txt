@@ -1,0 +1,110 @@
+//==============================
+// MONGOOSE HOOKS (middlewares)
+//==============================
+-> https://mongoosejs.com/docs/middleware.html#post
+-> https://mongoosejs.com/docs/middleware.html#types-of-middleware
+
+//-----------------------
+1) DOCUMENT MIDDLEWARE 
+//-----------------------
+-> runs only for .save() & .create()
+-> pre-save-hook  : runs before the document get saved 
+-> post-save-hook : runs after the document get saved 
+-> this = currently processed (being saved) document 
+
+->pre-save-hook: Eg:slugify
+schema.pre('save', function(next){
+	console.log(pre-save-hooks);
+	next();
+});
+
+-> post-save-hook
+schema.post('save', function(doc,next){
+	console.log(post-save-hooks);
+	console.log(doc);
+	next();
+});
+
+
+
+//-----------------------
+2) QUERY MIDDLEWARE 
+//-----------------------
+-> allows us to run functions before or after a certain query is executed
+-> pre-find-hooks : run before any find query is executed
+-> post-find-hooks : run after any find query has been executed
+-> this = currently processed query
+
+//ADDING SECRET TOURS (not visible to all users)
+ suppose in schema:
+(for some special tour - only show to VIP's)
+secretTours:{
+    type: boolean,
+    default: true   
+} 
+
+-> pre-find-hook
+---------
+//secretTour not visible in getAllTours
+//but visible in monthly tour plan or getTour(by Id)
+schema.pre('find', function(next){    
+    this.find({ secretTour: { $ne:true }});
+    next();
+});
+
+//secretTour not visible in getTour
+schema.pre('findOne', function(next){   
+    this.find({ secretTour: { $ne:true }});
+    next();
+});
+
+... so on for different methods (findByIdAndUpdate ,findByIdAndDelete)
+---------
+OR use:
+regular expression: all the query starting with find(mongoose query) : /^find/
+
+schema.pre(/^find/, function(next){
+
+    //this = query object
+    //Chaining find method to query
+    
+    //only secretTours (in Schema) have value: true
+    //find All the doc's where secretTour != true
+    this.find({ secretTour: { $ne: true }});
+
+    //Query Start time
+    this.start = Date.now();
+    next();
+});
+
+-> post-find-hook
+schema.post(/^find/, function(docs, next){    
+   //query ExcutionTime =  queryEndTime - queryStartTime
+   console.log(`Query took ${Date.now() - this.start} milliseconds!`);
+    
+    //console.log(docs);
+    next();
+});
+
+
+
+//-----------------------
+3)AGGREGIATION MIDDLEWARE 
+//-----------------------
+-> add hooks before or after the aggregation happens
+-> pre-aggregation-hook: before the aggregation is executed
+-> post-aggregation-hook: after the aggregation is executed
+-> this = current aggregation
+
+//unshift(): add an element at the beginning of the array
+//Pipeline = [opr1, opr2, opr3]
+
+->Exclude SECRET TOURS from the aggregation pipeline
+(exclude secretTours from monthly-tour-plan, tour-stats routes)
+
+schema.pre('aggregate', function(next){
+    this.pipeline().unshift({ $match : { secretTour: { $ne : true} } });
+    //console.log(this);
+    //console.log(this.pipeline()); //aggregation pipelineObject
+    next();
+})

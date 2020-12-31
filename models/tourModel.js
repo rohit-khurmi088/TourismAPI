@@ -98,6 +98,12 @@ const tourSchema = new mongoose.Schema({
     //startDates
     startDates:[Date], //Array of dates
 
+    //SECRET TOURS (special_Tour_package)
+    secretTour:{
+        type:Boolean,
+        default:false
+    }
+
 },{
     //Defining Schema to get Virtual_Properties in output
     toJSON: {virtuals:true},
@@ -115,6 +121,64 @@ tourSchema.virtual('durationWeeks').get(function(){
 });
 
 
+//==============================================
+//Mongoose MIDDLEWARES (hooks)
+//==============================================
+//_____________DOCUMENT MIDDLEWARE______________
+//this = current docs being processed (saved)
+
+//pre-save-hooks (Adding slug)
+tourSchema.pre('save', function(next){
+    this.slug = slugify(this.name, {lower:true});
+    next();
+});
+
+//post-save-hook
+/*tourSchema.post('save', function(doc,next){
+	//console.log(post-save-hooks);
+	console.log(doc);
+	next();
+});*/
+
+//_____________QUERY MIDDLEWARE_________________
+//this = current query being executed
+//Regular expression for all queries starting with find: /^find/
+
+//pre-find-hook(find all documents where SecretTours!=true)
+tourSchema.pre(/^find/, function(next){
+    this.find({ secretTour:{ $ne: true} });
+
+    //queryStartTime
+    this.start = Date.now();
+
+    next();
+});
+
+//post-find-hook (calculate query execution time)
+tourSchema.post(/^find/, function(docs, next){
+    //query ExcutionTime =  queryEndTime - queryStartTime
+    console.log(`Query took ${Date.now() - this.start} milliseconds!`);
+
+    //console.log(docs);
+    next();
+});
+
+//__________AGGREGATION MIDDLEWARE_______________
+//this = current aggregation
+
+//Exclude SECRET TOURS from the aggregation Pipeline
+tourSchema.pre('aggregate', function(next){
+
+    //console.log(this); //Agregate{}
+    //console.log(this.pipeline); //Aggreage Pipeline Object
+    
+    //unshift(): add an element at the beginning of the array
+    this.pipeline().unshift({$match:{secretTour:{$ne:true}}});
+
+    next();
+})
+
+//==============================================
 
 //Tour Model(blueprint/wrapper of Schema) -providing interface for CRUD operations
 const Tour = mongoose.model('Tour', tourSchema);

@@ -13,7 +13,7 @@ const connectDb = async ()=>{
     const conn = await mongoose.connect(Db, {
         useCreateIndex:true,
         useUnifiedTopology:true,
-        useFindAndModify:true,
+        useFindAndModify:false,
         useNewUrlParser:true
     });
     console.log(`Successfully Connected to MongoDB: ${conn.connection.host}`.green);
