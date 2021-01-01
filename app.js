@@ -31,11 +31,22 @@ app.use(express.json()); //Json Data
 //Serving css/js/images-static files(assets) 
 app.use(express.static(`${__dirname}/assets`)); //OR (./assets)
 
+//-----test DATA middleware----- 
+app.use((req,res,next)=>{
+    req.requestTime = new Date().toISOString();
+    //console.log(req.headers);
+    next();
+})
+
 //==================
 // ROUTES
 //==================
 const tourRoutes = require('./routes/tourRoutes');
-app.use('/api/v1/tours', tourRoutes);
+const userRoutes = require('./routes/userRoutes');
+
+app.use('/api/v1/tours', tourRoutes); //tourRoutes
+app.use('/api/v1/users', userRoutes); //userRoutes
+
 
 //ERROR 404! PAGE NOT FOUND
 //Handle all the HTTP Methods

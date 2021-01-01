@@ -4,7 +4,7 @@
 // https://expressjs.com/en/guide/error-handling.html
 /* Http statusCodes
 500 = Internal Server Error 
-400 = bad request, 404 = not found, 
+400 = bad request, 404 = not found, 401 = Unauthorized, 403 = forbidden
 200 = success, 201 = created */
 
 //Error Response class
@@ -31,7 +31,9 @@ const errorHandler = (err, req,res,next)=>{
         //console.log(err.name); -> Error Name
         //console.log(err.value); -> req.params.id
         
-
+        //-----------------
+        // MONGOOSE ERRORS
+        //-----------------
         //_______Mongoose Bad_Request_Id ERROR______
         if(err.name === 'CastError'){
             const message = `Invalid ${err.path}: ${err.value}`;
@@ -61,6 +63,23 @@ const errorHandler = (err, req,res,next)=>{
             error = new errorResponse(message, 400)
         }
        
+        //-----------------
+        // JWT ERRORS
+        //-----------------
+        //______JWT INVALID SIGNATURE_ERROR_______ 
+        //USER tries to access application with invalid token
+        if(err.name === 'JsonWebTokenError'){
+            const message = 'Invalid token.Please log in again!'
+            error = new errorResponse(message, 401);
+
+        } 
+        //______JWT EXPIRED TOKEN_ERROR_______ 
+        if(err.name === 'TokenExpiredError'){
+            const message = 'Your token has expired. Please login again';
+            error = new errorResponse(message, 401);
+        }
+
+
         //SENDING ERROR RESPONSE
         res.status(error.statusCode).json({
             status: error.status,

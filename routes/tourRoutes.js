@@ -1,6 +1,11 @@
 const express = require('express');
 const router = express.Router();
 
+//____________ AUTH middleware ______________________
+const {checkAuthenticatedUser, restrictTo} = require('../controllers/authController');
+
+
+//_______ Tour controllers _____________________
 //Importing SpecaialRoutes(Aggregation) form tourController
 const {getTourStats,getMonthlyPlan} = require('../controllers/tourController');
 
@@ -26,13 +31,13 @@ router.route('/top-5-cheap').get(aliasTopTours, getAllTours); //CHAINING Middlew
 //-----CHAINING SIMILAR ROUTES (CRUD)-----
 
 router.route('/')
-.get(getAllTours)
+.get(checkAuthenticatedUser,getAllTours) //only authenticated user => grant access
 .post(createTour)
 
 router.route('/:id')
 .get(getTour)
 .patch(updateTour)
-.delete(deleteTour)
+.delete(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), deleteTour)  //authenticated + based on role['admin','lead-guide']
 
 
 

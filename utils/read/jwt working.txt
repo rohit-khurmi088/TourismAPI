@@ -1,0 +1,123 @@
+
+//____________________________________ JWT WORKING _______________________________________________
+
+//=========================
+//JWT (npm i jsonwebtoken)
+//=========================
+
+-> create User model 
+   //validate password & passwordConfirm
+   //------bcryptjs----------------------
+   //store password as hashed - encryption
+   -> bcrypt algorithm - 1st salt then hash our password => storng protected password 
+   -> protection from bruteForce attack (guessing password))
+   -> adds a random string to a password so that 2 equal passwords do not generate the same hash
+        npm i bcryptjs (bcrypt implementation for javascript)
+        https://www.npmjs.com/package/bcryptjs
+    salt = measure of how cpu intensive this operation will be ,default =10
+    more salt value => more cpu intensive => better encryption
+    but higer salt value => more time in hashing
+    --------------------------------------------
+
+//____________________
+// JWT AUTHENTICATION
+//____________________
+Authentication : allowing user to signUp/signIn -JWT (Json Web Tokens)
+-> create authController
+   (userRoutes -> userController + authController)
+
+   1)----- signup -----
+     -> create new user
+     -> generate JWT
+     -> send jwt(token) + newUser in response
+
+   2)----- signin -----
+     checkIf user entered email & password
+     check if user exists(findOne({email}) & password is correct (using instanceMethod))
+        if not -> error response -> invalid username/password
+     if everything is OK -> create unique token for login
+
+   //_________________________________________
+   //PROTECTED ROUTES (CheckAuthenticatedUser)
+   //_________________________________________
+   1)CheckAuthenticatedUser Middleware
+   -> check if token is there -> req.header.authorization.split(' ')[1]
+      if not -> errorResponse
+  
+   -> Check if token is valid (jwt.verify)
+       - use {promisify} util module 
+       - const decoded = await promisify(jwt.verify)(token, secret)
+          decoded = {id: user._id , iat: issuedAt, exp: expiresIn} time = millisec
+       if token is valid -> grant access
+       else{
+            if toknen is not valid -> invalid Signature (JsonWebTokenError) -errorHandler
+            if token expired -> TokenExpiredError - errorHandler
+       }
+
+   ->Check if user still exists (OR delted at some point - jwt remains)
+      - currentUser = await User.findById(decoded.id)
+        if(!currentUser) => errorResponse
+
+   -> Check if user changed the password after jwt was issued
+         USER MODEL
+       - add field passwordChangedAt: Date to User Model (optional)
+         //JWTTimestamp = issuedAt (token) = decoded.iat - in millisec
+         //ChangedTimeStamp = parseInt(this.passwordChangedAt.getTime()/1000) - give time in millisec
+       - //use instance 'changedPasswordAfter(JWTTimestamp)' method on Model to compare (JWTTimeStamp & ChangedTimeStamp (both in millisec))
+
+       if(this.passwordChangedAt){ 
+           return JWTTimestamp < changedTimeStamp  //passwordChanged
+       }
+       return false;
+
+       AUTH CONTROLLER
+       if(currentUser.changedPasswordAfter(decoded.iat)){
+          errorResponse ->PASSWORD CHANGED. LOGIN AGAIN TO CONTINUE
+       }
+
+   -> IF EVERYTHING WORKS FINE -> 
+        set req.user = currentUser
+        //call
+        next()
+
+
+
+//____________________
+// JWT AUTHORIZATION 
+//____________________
+Authorization : alowing user to access specific route
+//NOT ALL LoggedIn users will be able to perform the same action in our API
+//restricting the logged in user from accesssing certain routes
+Eg: delete tour -> only admin can do this, not even the loggedIn user
+
+
+router.route('/:id').delete(checkAuthenticatedUser, restrictTo('admin','lead-guide'), deleteTour).
+
+->USER MODEL
+    //ROLE (role based authorization)
+    role:{
+        type:String,
+        enum:['user', 'guide', 'lead-guide', 'admin'],
+        //default_role
+        default: 'user' 
+    },
+
+
+->AUTH CONTROLLER
+//get roles for the currentUser  
+
+exports.restrictTo = (...roles)=>{
+    return (req,res,next)=>{
+        //roles = array => ['admin','lead-guide'] , role = 'user' (Not Included)
+        
+        //FOR ALL USERS with No permission to access
+        if(!roles.includes(req.user.role)){
+            return next(new errorResponse('You do not have permission to perform this action',403));
+        }
+
+        next();
+    }
+}
+
+//using middleware in routes
+routes(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), routeController)

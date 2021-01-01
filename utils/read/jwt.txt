@@ -1,0 +1,68 @@
+//====================
+//JWT (JSON WEB TOKENS)
+//====================
+-> Stateless solution for authentication
+-> no need to save any session state on the server - REST API(stateless)
+-> over https (secure)
+-> simple + powerful
+
+AUTHENTICATION
+User POST req -> name email password
+Application check if user exist & passwords are correct
+unique web token(JWT) for that user only is create using a secret string(Stored on server)
+Server sends JWT back to the client 
+client(browser) stores JWT - cookie or localStorage
+User is authenticated & logged into the application
+(without leaving any state on the server)
+
+-> server does not know which user's are actually logged in (user does know)
+
+AUTHORIZATION
+-> each time user want to access certain routes
+-> user sends his JWT along with the request - to access the route
+-> App verifies if JWT is valid
+   if valid - res -> send to client
+   if invalid - error -> Unauthorized access
+
+
+https://jwt.io/
+https://github.com/auth0/node-jsonwebtoken
+
+JWT (Encoded String)
+-> HEADER: metadata about the data (Created automatically)
+-> PAYLOAD: data to encode in the token (userid in the database _id)
+-> SIGNATURE: (header + payload) + secret (stored in .env file => encryption - unique signature) =>forms JWT(original signature)
+-> options : expiresIn: when JWT will expire (stored in .env => 5(Sec) 5d 20h 90m 120s)
+
+-> JWT send to client 
+-> client verify JWT -> JWT:(header + payload) + secret => test signature
+
+-> if JWT(original signature) = test signature  => AUTHENTICATION
+   else NOT AUTHENTICATED
+
+
+npm i jsonwebtoken
+secret = 32 chr long(strong encryption)
+
+In JSON Web Tokens, the payload is a set of fields that you want to include in the token being generated; Things your API will need to, say, get the right data for a particular user ({id: user._id})
+
+create token
+we need to set payload & secret , header = automatically genetrated
+send token to the client
+
+to select field that is set to select:false in model => .select('+fieldName')
+
+
+//===========
+//Instance method
+//===========
+-> method availabe on all the instance of a given collection
+
+
+AUTHENTICATION = LOGIN + ACCESS 
+LOGIN = signIn user with correct password
+ACCESS = 
+
+
+1st jwt  = when user is created -> stored in database -> jwt not stored in db(Serverless)
+2nd jwt  = when user with correct password signIn -> send back to client
