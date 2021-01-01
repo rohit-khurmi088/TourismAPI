@@ -1,11 +1,13 @@
 //_____NPM IMPORTS______
-const {promisify} = require('util'); //(for jwt.verify)
+const {promisify} = require('util');  //(for jwt.verify)
+const crypto = require('crypto');    //for password reset token
 
 //_____ FILE IMPORTS________
 const asyncHandler = require('../middlewares/asyncHandler'); //Global_asyncHandler
 const errorResponse = require('../middlewares/errorHandler/error'); //error class
 
 const jwt = require('jsonwebtoken'); //JWT
+const sendEmail = require('../utils/email'); //nodemailer_EmailHandler
 
 const User = require('../models/userModel'); //User Model
 
@@ -168,3 +170,121 @@ exports.restrictTo = (...roles)=>{
         next();
     }
 }
+
+
+
+//======================
+//** FORGOT PASSWORD **
+//=====================
+//Eg: /api/v1/users/forgotPassword
+exports.forgotPassword = asyncHandler(async(req,res,next)=>{
+    
+    //GET the User by email
+    //__________________________________
+    const user = await User.findOne({ email: req.body.email });
+    //user not found ->
+    if(!user){
+        return next(new errorResponse('No User found with this email'),404);
+    }
+    
+    //user found ->
+    //1) GENERATE RANDOM RESET TOKEN (using instance method - createPasswordResetToken() - User Model)
+    //__________________________________
+    const resetToken = await user.createPasswordResetToken();
+
+        //update document after generating reset token
+        //validateBeforeSave: false :deactivate all the validators eg: name,email etc..reduired fields
+        await user.save({ validateBeforeSave: false });
+    
+    //2) SEND reset Token TO User's email (nodemailer) - plain text
+        //__________________________________
+        //resetURL (RESET PASSWORD PAGE URL)
+        ///api/v1/users/resestPassword/token
+        const resetURL = `${req.protocol}://${req.get('host')}/api/v1/resetPassword/${resetToken}`;
+        const message = `Forgot your password? Submit a PATCH reqiest woth your new password & passwordConfirm to: ${resetURL}\n
+                         If you didn't forgeet your password, please ignore this email!`;
+        
+        //SENDING EMails
+        try{
+            //sendEmail({email,subject,message})
+            await sendEmail({
+                email: user.email, 
+                subject: 'PASSWORD RESET TOKEN (Valid for 10 min)', 
+                message: message 
+            });
+
+            //SENDING Response
+            res.status(200).json({
+                status: 'success',
+                message: 'Password Reset Token sent to email!'
+            });
+        
+        }catch(err){
+            //RESET both the resetToken & resetExpires property
+            user.createPasswordResetToken = undefined,
+            user.passwordResetExpires = undefined
+            
+                //update document after generating reset token
+                //validateBeforeSave: false :deactivate all the validators eg: name,email etc..reduired fields
+                await user.save({ validateBeforeSave: false});
+            
+            //errorResponse
+            return next(new errorResponse('There was an error sending the email.Try again later!',500));
+        }
+})
+
+
+
+
+//=====================
+//** RESET PASSWORD ** 
+//=====================
+//patch : modification in password
+//Eg: /api/v1/users/resestPassword/token(any_token)
+exports.resetPassword = asyncHandler(async(req,res,next)=>{
+
+    //till now we were sending token as a plain text but to compare it wih token in the database we need to encrypt the token
+    //to compare both tokens - encrypt the original token again
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+
+    //Get User BASED on token + (tokenExpireDate > currentDate => token not expired)
+    //______________________________________________________________________________
+    //to get user from token Model.findOne({passworResetToken: token, passwordResetExpires: {$gt: Date.now()}});
+    const user = await User.findOne({ passwordResetToken: hashedToken, passwordResetExpires: {$gt: Date.now()} });
+    
+    //->if there is no user
+    if(!user){
+        //errorResponse
+        return next(new errorResponse('Token is Invalid or Expired',400));
+    }
+    //->If token has not been expired but there is user => SET NEW PASSWORD + REMOVE passwordResetToken,passwordExpiresIn from the database
+    //____________________________________________________
+    //----- SET NEW PASSWORD -----
+    user.password = req.body.password;
+    user.passwordConfirm = req.body.passwordConfirm;
+
+    //----- REMOVE passwordResetToken,passwordExpiresIn from the database -----
+    user.passwordResetToken = undefined;
+    user.passwordResetExpires = undefined;
+    
+    //update the document
+    await user.save();
+
+    //UPDATE ChangedPasswordAt property (defined in User Model)
+    //__________________________
+    // -> updated in pre-save-middleware
+
+    //LogIn The user in -> SEND JWT
+    //____________________________
+    //jwt token
+    const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{
+        expiresIn:process.env.JWT_EXPIRES_IN
+    });
+
+    //SENDING RESPOSNSE
+    res.status(200).json({
+        status: 'success',
+        token: token
+    });
+
+})

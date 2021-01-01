@@ -121,3 +121,25 @@ exports.restrictTo = (...roles)=>{
 
 //using middleware in routes
 routes(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), routeController)
+
+
+
+//===================
+// PASSWORD RESET ->
+//===================
+
+//FORGOT PASSWORD - POST /api/v1/users/forgotPassword
+-> get the user by email
+-> Generate rANDOM RESET Token - cryypto module
+-> Sending token to User email using Nodemailer
+(token sent to user mail = plain text & token saved in Database = hashed)
+
+//RESET PASSWORD - Patch /api/v1/users/resetPassword/:token
+-> convert plain text  token send to user -> hashed form  -> token = {req.params.token}
+-> Get User BASED on token + (tokenExpireDate > currentDate => token not expired)
+     -> if(!user) -> error response
+     -> if(user) -> 
+          - SET NEW PASSWORD
+          - REMOVE passwordResetToken,passwordExpiresIn from the database
+-> UPDATE ChangedPasswordAt property (defined in User Model)
+-> LogIn The user in -> SEND JWT

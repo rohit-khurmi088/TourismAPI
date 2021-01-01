@@ -2,6 +2,7 @@ const mongoose = require('mongoose');
 
 const validator = require('validator'); //validator
 const bcrypt = require('bcryptjs'); //bcryptjs for password encryption (async/await)
+const crypto = require('crypto'); //for password reset token
 
 //userSchema
 const userSchema = new mongoose.Schema({
@@ -58,7 +59,11 @@ const userSchema = new mongoose.Schema({
     },
 
     //PASSWORD Changed DATE
-    passwordChangedAt: Date //if password was changed
+    passwordChangedAt: Date, //if password was changed
+
+    //PASSWORD RESET (save in database)
+    passwordResetToken: String, //password reset token
+    passwordResetExpires: Date  //password reset token expireing time 
 });
 
 
@@ -85,6 +90,27 @@ userSchema.pre('save', async function(next){
     next();
 })
 
+//____________________________________________________________
+//UPDATE ChangedPasswordAt property - After PASSWORD RESET
+//____________________________________________________________
+//this = current document
+userSchema.pre('save', function(next){
+
+    //If passowrdNotModified OR new user created
+    if(!this.isModified('password') || this.isNew) return next();
+
+    //OnlyUpdate if we modified the password (RESET)
+    //__________________________
+    //NOTE---
+    //saving to Database is slower than issuing the JWT
+    //sometimes ChangedPasswordTimeStamp is issued after JWT(faster)
+    //set password ChangedAt 1 sec in the past
+    this.passwordChangedAt = Date.now() - 1000 //(1000 = 1sec)
+
+    next();
+}),
+
+
 //==================
 // INSTANCE METHOD
 //==================
@@ -98,7 +124,7 @@ userSchema.methods.correctPassword = async function(enterdPassword, userPassword
     //enterdPassword = plain text , userPassword = encrypted/hashed (in database)
     //use bcrypt.compare() to compare passwords 
     return await bcrypt.compare(enterdPassword, userPassword);
-}
+},
 
 //___________________________________________________________________
 //CHECK if user changed the password after the JWT(Token) was issued
@@ -117,8 +143,29 @@ userSchema.methods.changedPasswordAfter = function(JWTTimestamp){
     }
     //if Password was not changed
     return false;
-}
+},
 
+
+
+//____________________________________________________
+// RESET PASSWORD - GENERATING 'password reset token'
+//____________________________________________________
+userSchema.methods.createPasswordResetToken = function(){
+    
+    //using crypto module -> generate random token  (32 characters hexadecimal string)
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    //Dont store reset token as plain string  in DATABASE (Hashing using 'sha256' algorithm)
+    this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    //setting reset token expiring time (10 minutes after token was generated (in millisec))
+    this.passwordResetExpires =  Date.now() + 10 * 60 * 1000; //10 minutes(millisec)
+
+    //Encrypted reset token -> stored in database
+    //plain reset token -> send to user email 
+    console.log(resetToken, this.passwordResetToken);
+    return resetToken;
+}
 
 
 
