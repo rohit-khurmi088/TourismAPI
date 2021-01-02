@@ -1,0 +1,158 @@
+//====================
+// SECURITY
+//====================
+
+1)COMPROMISE DATABASE
+  -> attacker gained access to our database
+  -> encrypt password(bcrypt) + pasword RESET tokens (sha-256)
+  ->Brute Force Attacks
+    - randomly trying passwords until they match the real one 
+    - PREVENTION
+      - use bycrypt -> make login request slow 
+      - implement rate limiting (express-rate-limit)
+      - implement maximum login attempts (Eg: after 10 failed attempts -> wait 1 hr then try again)
+
+
+2)CROSS SIDE SCRIPTING (XXS) Attacks
+-> attacker tries to run his scripts into the webpage to run his malicious code
+-> allows the attacker to read local storage
+-> PREVENTION
+  - store JWT in 'HTTP Cookie only' (browser can only raceive & send the cookie but cannot access OR modify it)
+  - sanitize user input
+  - set special HTTP headers(helmet package)
+
+
+3)DENIAL OF SERVICE (DOS) ATTACK
+-> attacker send so many req. to the server that it breakes down or application becomes unavailable
+-> PREVENTION
+  - limit body payload (in body parser)
+  - avoid evil regular expressions
+  - implement rate limiting (express-rate-limit)
+
+
+4)NO SQL QUERY INJECTION
+-> NoSQL injection vulnerabilities allow attackers to inject code into commands for databases that don’t use SQL queries, such as MongoDB.
+-> NoSQL injection attacks can be especially dangerous because code is injected and executed on the server in the language of the web application, potentially allowing 
+   arbitrary code execution.
+-> PREVENTION
+  - USE Mongoose for Mongodb (Good schemaTypes)
+  - sanitize user input data
+
+5)CROSS SIDE REQUEST FORGERY
+-> attack that forces a user to perform unwanted actions on the webpage
+-> PREVENTION 
+  - csurf package 
+
+6)----- BEST PRACTICES for AUTHENTICATION & AUTHORIZATION -----
+-> dont send error details to client (browser)
+-> use https (PRODUCTION ENVIRONMENT)
+-> deny jwt after password change
+-> dont commit sensitive data to git (.env file)
+-> create a random password RESET tokens with expire date (Crypto module)
+-> require RE-AUTHENTICATION before high value action
+-> confirm email after new account creation 
+-> prevent CROSS SIDE REQUEST FORGERY (using csurf package)
+-> blacklist of untrusted tokens (validated on each request)
+-> refresh jwt tokens - keep user logged in 
+-> 2 -factor authentication (send text message to Phone no.)
+-> implement parameter pollution causing uncaught exceptions
+
+
+
+
+//________________
+// RATE LIMITER (from same '/api') 
+//________________
+-> prevents DOS, Brute Force Attacks
+-> https://www.npmjs.com/package/express-rate-limit
+-> Limits the no. of req.from single ip address
+-> if too many req. => block requests
+-> If app crash during this time -> max Limit is reset
+-> using express-rate-limit
+-> npm i express-rate-limit
+-> global middleware
+
+const rateLimit = require('express-rate-limiter');
+const limiter = rateLimiter({
+	max: 200, //req. limits
+	windowMs: 60 * 60 * 1000, //1hr(in millisec)
+	message: 'Too many request from this IP, Please try again in an hour!'
+});
+//apply this limiter only to all routes starting with '/api'
+-> use before bodyParser
+app.user('/api', limiter);
+
+headers -> 
+x-RateLimit-Limit: total limit
+x-RateLimit-Remaining: remaining limit
+
+
+
+//___________________________
+// SET Security HTTP HEADERS
+//___________________________
+-> Limit the amount of data that comes in the body
+-> using helemet package
+-> https://www.npmjs.com/package/helmet
+-> https://github.com/helmetjs/helmet
+-> npm i helmet
+
+const helmet = require("helmet");
+
+app.use(helmet()); //put at top of all middlewares (before morgan)
+
+//limit data from req.body to upto 10kb;
+app.use(express.json({ limit: '10kb' })); 
+
+
+headers -> 
+X-DNS-Prefetch-Control:off
+Strict-Transport-Secutity
+
+
+
+//___________________________
+// Data Sanitization
+//___________________________
+-> Clean all the data that comes into our application from malicious code
+
+-> Data Sanitization agains NoSQL query Injection : npm i expess-mongo-sanitize
+-> Data Sanitization against XSS : npm i xss-clean
+
+const mongoSanitize = require('express-mongo-sanitize');
+const xss = require('xss-clean');
+
+-> use after bodyParser
+app.use(mongoSanitize()); //filters out $ sign, mongoDb operators from req.body
+app.use(xss());          //prevents from adding html code in req.body -> converts html symbol to html entity
+
+
+
+//________________________________
+// PREVENTING parameter Pollution
+//_________________________________
+Eg:/api/v1/tours?sort=price&sort=duration
+- 2 sorts in 1 query = error
+
+-> npm i hpp (http patameter pollution)
+
+const hpp = require('hpp');
+-> after xss
+app.use(hpp());
+
+-> error gone now it will only use the latest sort passed
+
+But if we want tours with duration=5 & duration=9
+Eg:/api/v1/tours?sort=price&sort=duration=5&duration=9
+
+//whitelist = array of properties for which we allow duplicates in the query
+app.use(hpp({
+	whitelist:[
+	  'duration',
+      'ratingsQuantity',
+      'ratingsAverage',
+      'maxGroupSize',
+      'difficulty',
+      'price'
+	]
+}));
