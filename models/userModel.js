@@ -63,7 +63,14 @@ const userSchema = new mongoose.Schema({
 
     //PASSWORD RESET (save in database)
     passwordResetToken: String, //password reset token
-    passwordResetExpires: Date  //password reset token expireing time 
+    passwordResetExpires: Date,  //password reset token expireing time 
+
+    //ACCOUNT Status (active -> default)
+    active:{
+        type:Boolean,
+        default:true,
+        select:false //dont show in results(stored in Database)
+    }
 });
 
 
@@ -109,6 +116,18 @@ userSchema.pre('save', function(next){
 
     next();
 }),
+
+
+//____________________________________________________________
+//PRE-find-HOOKS (DONT SHOW INACTIVE users in the results)
+//____________________________________________________________
+//this = current query being executed
+userSchema.pre(/^find/, function(next){
+    //DONT SHOW INACTIVE users in the results
+    this.find({active: {$ne: false}})
+
+    next();
+})
 
 
 //==================

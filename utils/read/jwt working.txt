@@ -143,3 +143,40 @@ routes(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), routeControlle
           - REMOVE passwordResetToken,passwordExpiresIn from the database
 -> UPDATE ChangedPasswordAt property (defined in User Model)
 -> LogIn The user in -> SEND JWT
+
+
+
+
+//=================
+// update Password (checkAuthenticatedUser) : AuthRoutes
+//=================
+-> /api/v1/users/updateMyPassword
+-> get current user.select('+ password field') 
+-> check if ENTERED currentPassword matches with the password in Database -> correctPassword(enterPassword, userPassword) -> Instance Method
+        if incorrect current password - error
+        else UPDATE password & passwordConfirm from req.body (Newly Entered passwords) + user.save() //save document
+-> LogIn The user in -> SEND JWT
+
+//===============
+// UPDATE User Data (checkAuthenticatedUser) :userRoutes
+//===============
+-> /api/v1/users/updateMe : patch
+-> get user 
+-> filter our the fields not to update
+-> findByIdAndUpdate -> update the current user Data
+
+
+//===============
+// DELETE User (checkAuthenticatedUser) : userRoutes
+//===============
+-> /api/v1/users/deleteMe :delete
+-> USER MODEL
+   active:{
+      type:boolean,
+      default: true,
+      select:false
+   }
+
+
+//findByIdAndUpdate(req.user.id, {active:false})
+//query middleware(pre-find-hooks) -> to hide inactive users from result

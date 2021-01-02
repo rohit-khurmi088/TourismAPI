@@ -288,3 +288,52 @@ exports.resetPassword = asyncHandler(async(req,res,next)=>{
     });
 
 })
+
+
+
+
+
+//=====================
+//** UPDATE PASSWORD ** 
+//=====================
+exports.updatePassword = asyncHandler(async(req,res,next)=>{
+//ONLY for loggedIn users => chain(checkAuthenticatedUser) 
+//Let passwordCurrent = currentPassword (not storedIn database or Mode -> password = currentPassword(same))
+//so, password = updatedPassword
+//    passwordConfirm = confirm updated Password
+//if we do user.findByIdAndUpdate() -> validators will not work here
+
+    //GET Current User(req.user)
+    //by default password -> select:false -> to show password use select('+password')
+    const user = await User.findById(req.user.id).select('+password');
+
+    //CHECK if Posted(ENTERED -currentPassword) Password Is correct
+    //currentPassword => plain text & password to match with (in database)=> encrypted
+    //use instance method correctPassowrd(enteredPassword, userPassword) - declared in User Model to compare both
+    
+    //if PASSWORDS DOES NOT MATCH ->error
+    if(!(await user.correctPassword(req.body.passwordCurrent, user.password))){
+        //errorResponse
+        return next(new errorResponse('Please enter correct Current Password',401));
+    }
+    
+    //If PASSWORD is Correct(MATCHES) -> Update Password
+    user.password = req.body.password,
+    user.passwordConfirm = req.body.passwordConfirm
+    //update the document
+    await user.save();
+
+    //LogIn The user in -> SEND JWT
+    const token = jwt.sign({id: user.id}, process.env.JWT_SECRET,{
+        expiresIn:process.env.JWT_EXPIRES_IN
+    });
+
+    //SENDING RESPOSNSE
+    res.status(200).json({
+        status: 'success',
+        token: token
+    });
+})
+
+
+

@@ -5,7 +5,7 @@
 /* Http statusCodes
 500 = Internal Server Error 
 400 = bad request, 404 = not found, 401 = Unauthorized, 403 = forbidden
-200 = success, 201 = created */
+200 = success, 201 = created 204 = deleted */
 
 //Error Response class
 const errorResponse = require('./error');

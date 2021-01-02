@@ -2,10 +2,10 @@ const express = require('express');
 const router = express.Router();
 
 //importing functions from authController 
-const {signup, signin , forgotPassword, resetPassword} = require('../controllers/authController');
+const {signup, signin ,checkAuthenticatedUser, forgotPassword, resetPassword, updatePassword } = require('../controllers/authController');
 
 //importing functions from userController(Destructuring)
-const {getAllUsers,createUser,getUser,updateUser,deleteUser} = require('../controllers/userController');
+const {getAllUsers,createUser,getUser,updateUser,deleteUser, updateMe,deleteMe} = require('../controllers/userController');
 
 
 //____________________
@@ -17,11 +17,18 @@ router.route('/signin').post(signin); //signIn
 router.route('/forgotPassword').post(forgotPassword); //forgotPassword
 router.route('/resetPassword/:token').patch(resetPassword); //resetPassword
 
+//ONLY for loggedIn users => chain(checkAuthenticatedUser) 
+router.route('/updateMyPassword').patch(checkAuthenticatedUser, updatePassword); //updatePassword
 
 //____________________
 // USER ROUTES
 //____________________
-//Chaining Similar Routes
+
+router.route('/updateMe').patch(checkAuthenticatedUser, updateMe ) //(only LoggedIn user) -> UPDATE USER Data
+router.route('/deleteMe').delete(checkAuthenticatedUser, deleteMe ) //(only LoggedIn user) -> Inactive his account
+
+
+//---Chaining Similar Routes---
 
 router.route('/')
 .get(getAllUsers)
@@ -29,7 +36,7 @@ router.route('/')
 
 router.route('/:id')
 .get(getUser)
-.patch(updateUser)
+.patch(updateUser) 
 .delete(deleteUser)
 
 
