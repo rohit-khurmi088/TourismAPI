@@ -12,8 +12,47 @@ const sendEmail = require('../utils/email'); //nodemailer_EmailHandler
 const User = require('../models/userModel'); //User Model
 
 
-
 //<-------AUTH CONTROLLERS(Handlers)------------->
+
+//______________COMMON CODE___________________________
+//--Generating JWT(token)---
+const signToken = (id)=>{
+    return jwt.sign({id: id}, process.env.JWT_SECRET, {
+        expiresIn: process.env.JWT_EXPIRES_IN
+    });
+}
+
+//LogIn The user in -> SEND JWT + SENDING Response
+const createSendToken = (user,statusCode, res)=>{
+    //--Generating JWT(token)---
+    const token = signToken(user.id); //generate jwt declared above
+
+    //*-----COOKIES--------*
+    const cookieOptions = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000), //90 days from currentDate
+        httpOnly: true,
+      //secure:true only added in production mode
+    };
+
+    if(process.env.NODE_ENV === 'production') cookieOptions.secure = true;
+    
+    //SENDING Cookie
+    res.cookie('jwt',token, cookieOptions);
+    //----------------------
+
+    //----Don't SHOW password(encrypted) in response----
+    user.password = undefined;
+
+    //SENDING RESPONSE
+    //statusCode = depends upon response type
+    res.status(statusCode).json({
+        status:'success',
+        token: token,
+        data:{user:user} //user
+    });
+}
+//______________________________________________________
+
 
 //=====================
 // SIGNUP
@@ -24,17 +63,8 @@ exports.signup = asyncHandler(async(req,res,next)=>{
     //CREATE new User
     const newUser = await User.create(req.body);
 
-    //GENERATE TOKEN(jwt) on SignUp
-    const token = jwt.sign({id: newUser._id}, process.env.JWT_SECRET, {
-        expiresIn: process.env.JWT_EXPIRES_IN
-    });
-
-    //Sending Response
-    res.status(201).json({
-        status: 'success',
-        token: token,
-        data: {user: newUser}
-    });
+    //GENERATE TOKEN(jwt) on SignUp + SENDING response (user + token)
+    createSendToken(newUser, 201, res);
 })
 
 
@@ -62,16 +92,8 @@ exports.signin = asyncHandler(async(req,res,next)=>{
         return next(new errorResponse('Incorrect email OR password'), 401);
     }
 
-    //If EVERYTHING IS OK -> CREATE a unique JWT for singIn
-    const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{
-        expiresIn:process.env.JWT_EXPIRES_IN
-    });
-    
-    //Sending Response
-    res.status(201).json({
-        status: 'success',
-        token: token,
-    });
+    //If EVERYTHING IS OK -> CREATE a unique JWT for singIn + SENDING Response (token)
+    createSendToken(user, 200, res);
 })
 
 
@@ -146,7 +168,7 @@ exports.checkAuthenticatedUser = asyncHandler(async(req,res,next)=>{
     req.user = currentUser;
 
     next();
-})
+});
 
 
 
@@ -231,7 +253,7 @@ exports.forgotPassword = asyncHandler(async(req,res,next)=>{
             //errorResponse
             return next(new errorResponse('There was an error sending the email.Try again later!',500));
         }
-})
+});
 
 
 
@@ -274,20 +296,10 @@ exports.resetPassword = asyncHandler(async(req,res,next)=>{
     //__________________________
     // -> updated in pre-save-middleware
 
-    //LogIn The user in -> SEND JWT
+    //LogIn The user in -> SEND JWT + SENDING Response(token)
     //____________________________
-    //jwt token
-    const token = jwt.sign({id: user._id}, process.env.JWT_SECRET,{
-        expiresIn:process.env.JWT_EXPIRES_IN
-    });
-
-    //SENDING RESPOSNSE
-    res.status(200).json({
-        status: 'success',
-        token: token
-    });
-
-})
+    createSendToken(user, 200, res);
+});
 
 
 
@@ -323,17 +335,9 @@ exports.updatePassword = asyncHandler(async(req,res,next)=>{
     //update the document
     await user.save();
 
-    //LogIn The user in -> SEND JWT
-    const token = jwt.sign({id: user.id}, process.env.JWT_SECRET,{
-        expiresIn:process.env.JWT_EXPIRES_IN
-    });
-
-    //SENDING RESPOSNSE
-    res.status(200).json({
-        status: 'success',
-        token: token
-    });
-})
+    //LogIn The user in -> SEND JWT + SENDING Response
+    createSendToken(user, 200, res);
+});
 
 
 

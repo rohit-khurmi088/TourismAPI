@@ -4,7 +4,7 @@
 // https://expressjs.com/en/guide/error-handling.html
 /* Http statusCodes
 500 = Internal Server Error 
-400 = bad request, 404 = not found, 401 = Unauthorized, 403 = forbidden
+400 = bad request, 404 = not found, 401 = Unauthorized, 403 = forbidden, 429 = tooMany requests
 200 = success, 201 = created 204 = deleted */
 
 //Error Response class

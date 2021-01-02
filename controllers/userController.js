@@ -20,6 +20,7 @@ exports.getAllUsers = asyncHandler(async(req,res,next)=>{
     //Sending Response
     res.status(200).json({
         status:'success',
+        results: users.length,
        data: {users}
     });
 })

@@ -180,3 +180,32 @@ routes(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), routeControlle
 
 //findByIdAndUpdate(req.user.id, {active:false})
 //query middleware(pre-find-hooks) -> to hide inactive users from result
+
+
+
+//*****SENDING JWT via Cookie*****
+//_____________
+// COOKIE
+//_____________
+-> small piece of text that a server can send to client
+-> browser store cookie & sends it back with all future req. on the same server
+-> ** Without secure: true a browser would send those cookies along with any non-encrypted HTTP requests to your domain whether or not your domain listens to request or responds to it **  
+-> send jwt as a cookie => browser can store it in more secure way
+
+   //-----COOKIES--------
+    const cookieOptions = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000), //90 days from currentDate
+        httpOnly: true,
+      //secure:true only added in production mode
+    }
+
+    if(process.env.NODE_ENV === 'production'){
+        cookieOptions.secure = true
+    }
+    
+    //SENDING Cookie
+    res.cookie('jwt',token, cookieOptions);
+    //----------------------
+
+    // Remove password from output
+      user.password = undefined;
