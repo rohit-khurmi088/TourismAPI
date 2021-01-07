@@ -1,0 +1,34 @@
+//_________________________________
+// NESTED ROUTES  (Tour -> reviews)
+//_________________________________
+
+/api/v1/tours/:tourId/review - GET: get all reviews of current tour
+/api/v1/tours/:tourId/review - POST: create review on current tour
+/api/v1/tours/:tourId/review/:id - GET: get specific review on current tour
+/api/v1/tours/:tourId/review/:id - PATCH: update specific review on current tour
+/api/v1/tours/:tourId/review/:id - DELETE: delte specific review on current tour
+
+----- tourRoutes -----
+/api/v1/tours
+/api/v1/tours/:tourId (id= tourId)
+
+//Put at top
+router.use('/:id', reviewRoutes);
+
+//reviewRoutes 
+/api/v1/tours/tourId/reviews
+
+//----- reviewRoutes -----
+//allow to pass review id to tourRoute
+const router = express.Router({mergeParams:true});
+
+//(api/v1/tours/:id/reviews)
+router.route('/')
+.get(getAllReviews)
+.post(cheackAuthenticatedUser, restrictTo('user'),setTourIds createReview)
+
+//(api/v1/tours/:id/reviews/:id)
+router.route('/:id')
+.get(getReview)
+.patch(createReview)
+.delete(deleteReview)

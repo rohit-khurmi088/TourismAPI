@@ -102,7 +102,44 @@ const tourSchema = new mongoose.Schema({
     secretTour:{
         type:Boolean,
         default:false
-    }
+    },
+
+    //Start_Location & locations[]
+    //LOCATION(mongoose)-(GEOJSON data)
+    //startLocation
+    startLocation:{
+        type:{
+            type:String,
+            default:'Point',
+            enum: ['Point'],   //'location.type' must be 'Point
+        },
+        //coordinates: [longitude,latitude] 
+        coordinates: [Number],
+        address:String,
+        description:String
+    },
+    //other tour Locations[]
+    locations:[{
+        type:{
+            type:String,
+            default:'Point',
+            enum: ['Point'],   //'location.type' must be 'Point
+        },
+        //coordinates: [longitude,latitude] 
+        coordinates: [Number],
+        address:String,
+        description:String,
+        day: Number
+    }],
+
+    //guides
+    //(user(role) = guide => ref from user model)
+    guides:[
+        {
+            type: mongoose.Schema.Types.ObjectId,
+            ref:"User" //user model
+        }
+    ]
 
 },{
     //Defining Schema to get Virtual_Properties in output
@@ -118,6 +155,23 @@ const tourSchema = new mongoose.Schema({
 //converting days -> weeks (duration)
 tourSchema.virtual('durationWeeks').get(function(){
     return this.duration / 7;
+});
+
+
+//========================================
+// ** virtual POPULATE (reviews on tour)**
+//========================================
+//Keeping a reference of all child documents -> parent document without persisting that data to the database
+//if we keep array of review id on tours - infinite long array + manual query teviews
+//-> To access all the reviews under the given tour
+//-> WITHOUT keeping arrays of reviews id on tours: use virtual properties
+
+//Tour Id in Review model = tour
+//(NOTE: _id in localModel = tour in foreignModel )
+tourSchema.virtual('reviews',{
+    ref: 'Review',          //reviewModel
+    foreignField: 'tour',  //name of the field in the other model(Review) where the ref to current model(Tour) in stored
+    localField: '_id'     //where the id is actually store in the current model
 });
 
 
@@ -143,6 +197,23 @@ tourSchema.pre('save', function(next){
 //_____________QUERY MIDDLEWARE_________________
 //this = current query being executed
 //Regular expression for all queries starting with find: /^find/
+
+//______________________________________________
+//RELATING TOURS(model) with REVIEWS (model)
+//-----------------------------------------------
+// POPULATING tours(find) with guides(ref) data (pre-find-hooks)
+//-----------------------------------------------
+//using populate() -> creates a new query which might affect our application
+//POPULATING tours - 'guides' data(as ref from user model)
+//select only certian fields to show using populate (- => exclude fields)
+tourSchema.pre(/^find/, function(next){
+    this.populate({
+        path:'guides',  //ref data
+        select:'-__v -passwordChangedAt -password' //excluded fields
+    });
+    next();
+})
+//-------------------------------------------------
 
 //pre-find-hook(find all documents where SecretTours!=true)
 tourSchema.pre(/^find/, function(next){

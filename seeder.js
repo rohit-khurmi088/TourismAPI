@@ -34,7 +34,7 @@ mongoose.connect(Db, {
 //console.error(err); writes error message to the console
 
 //ToursData tours[]
-const tours = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/tours.json`, 'utf-8'));
+const tours = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/tours-new.json`, 'utf-8'));
 
 
 

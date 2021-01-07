@@ -92,7 +92,21 @@ exports.createTour = asyncHandler(async(req,res,next)=>{
 exports.getTour = asyncHandler(async(req,res,next)=>{
      
     //Model.findById(req.params.id) OR Model.findOne({_id: req.params.id}) - find element by id
-    const tour = await Tour.findById(req.params.id);
+    //const tour = await Tour.findById(req.params.id);
+
+    //using populate() -> creates a new query which might affect our application
+    //POPULATING tours - 'guides' data(as ref from user model)
+    //const tour = await Tour.findById(req.params.id).populate('guides');
+    //select only certian fields to show using populate (- => exclude fields)
+    /*const tour = await Tour.findById(req.params.id).populate({
+        path:'guides',                              //ref data
+        select:'-__v -passwordChangedAt -password' //excluded fields
+    });*/
+    //using this with every /^find/ => code repetition
+    //Instead of this to populate all queries (/^find/ -> use query middleware(tourModel))
+
+    //POPULATING 'reviews' on tour(used virtual Properties)
+    const tour = await Tour.findById(req.params.id).populate('reviews');
 
     //If tour is not found
     if(!tour){

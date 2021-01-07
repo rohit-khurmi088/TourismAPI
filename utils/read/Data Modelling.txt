@@ -1,0 +1,155 @@
+================
+//Data Modelling 
+================
+-> untructured data -> structured data (logical data model)
+-> Types of relationship between data
+-> Refrencing/normalization vs embedding/denormalization
+-> Embedding or referencing other documents
+
+
+//======================
+//TYPES OF RELATIONSHIPS
+//======================
+
+1 field :1 value
+movie <-> name
+
+1:MANY - used to realize normalize or denormalize
+1: few  movie(1) <-> awards(5-10 many)
+1:many  movie(1) <-> reviews(100's many)
+1:ton's app(1) <-> logs(many *)
+
+MANY:MANY (both direction)
+movie <-> actor
+
+//____________________________
+//REFERENCING (NORMALIZATION)
+//____________________________
+-> keep 2 related data sets & all the documents seprated
+-> actor Id creates reference on movie document
+-> child referencing (Movie- parent, actor child)
+-> movie
+   actors:[
+    ObjectID('222'),
+    ObjectID('777'),
+   ]
+-> actor1 ObjectID('222')
+-> actor2 ObjectID('777')
+-> 2 queries to get data from referenced document
+-> it is EASIER to query each document in its own
+
+//_________________________________
+//EMBEDDED (DENORMALIZED - favoured)
+//_________________________________
+-> embedding the related documents into main document
+-> movie objectId('434')
+-> actor1 
+-> actor2 
+-> impossible to query embedded document in its own
+-> we get all the information in a single query
+
+To decide normalize/denormalize data-> (criteria)
+- type of relationship
+- data access patterns (data-read,does not change, high-read/write, updated a lot, low read/write)
+- data closness (how to query data from database)
+
+high read/writ - denormalized (Refrencing)
+high updating - Normalizing (embedding)
+
+1:few -> embedd related dataset -> maindataset
+1: may -> decide acc. to other 2 criteria
+1: ton's -> reference/ normalize data
+
+
+//======================
+// TYPES OF REFRENCING
+//======================
+
+CHILD REFERENCES
+-> child ref -> parent document 
+-> 1: few
+
+PARENT REFRENCES
+-> dont allow array to grow indefinitely
+-> parent ref -> child document
+-> 1:many => Child refencing
+-> 1: tons => Parent refrencing
+
+TWO-WAY REFENCING (many-many)
+-> each movie -> many actor 
+-> each actor -> many movie
+-> keep ref. of both in both
+
+
+1:few -> embedd related dataset -> maindataset
+1: may -> decide acc. to other 2 criteria
+1: ton's -> reference/ normalize data
+
+mostly - read (high read/write) -embedding (Denormalized)
+100 images -> each movie (reading images - embed images in movie)
+
+mostly -updated- referencing data(Normalize)
+each movie -many review(updated - data change all time)
+
+all users can have many email's 
+email -> user (embedded)
+if we need both - normalize into 2 diff data set
+
+
+//___________________________________________
+// PLANNING MODELLING for Current Tourism API
+//____________________________________________
+1)User Model(always seprate schema in any db)
+
+2)Tours Model
+- locations
+- guides (ref:user)
+- reviewId's - virtual Populate, populate review data
+
+3)Reviews Model
+ - userId (ref:User)
+ - tourId (ref:Tour
+ - populating tour data,userData - queryMiddleware
+
+
+4)Bookings Model
+- tour id
+- user id
+
+
+1 user -> few reviews
+1 review -> 1 user
+1 => few (parent refrencing)
+parent (user)ref -> child (Review)
+
+1 tour -> few reviews
+1 review -> 1 tour
+1 => few (parent refrencing)
+parent (tour)ref -> child (Review)
+
+1 tour -> few (3-4)location
+1 location -> few tours
+few: few (many - many)
+-> denormalize (embedded)locations (Few)
+-> whithout location -> no tour
+-> keep loactions model in tours
+
+user - tours(user = tour guides, lead guide)
+few: few 
+1 tour - few guides
+each guide : few tours
+
+user = tour guide => embedd user in tour
+-> embedding or child refencing
+
+user -> bookings(buys tours)
+tours -> bookings
+booking -> tours ->  user
+
+1 user -> book many tours
+1 booking : 1 user
+1:many
+
+1 tour -> many booking
+1 booking -> 1 tour
+1: many

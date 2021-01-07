@@ -101,9 +101,11 @@ app.use((req,res,next)=>{
 //==================
 const tourRoutes = require('./routes/tourRoutes');
 const userRoutes = require('./routes/userRoutes');
+const reviewRoutes = require('./routes/reviewRoutes');
 
 app.use('/api/v1/tours', tourRoutes); //tourRoutes
 app.use('/api/v1/users', userRoutes); //userRoutes
+app.use('/api/v1/reviews', reviewRoutes); //reviewRoutes
 
 
 //ERROR 404! PAGE NOT FOUND
