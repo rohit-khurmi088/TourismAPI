@@ -12,6 +12,8 @@ const colors = require('colors');
 
 //IMPORT MODEL
 const Tour = require('./models/tourModel'); //ToursModel
+const User = require('./models/userModel'); //UserModel
+const Review = require('./models/reviewModel'); //ReviewModel
 
 //Seprate Database connection for seeder
 //replacing <PASSWORD> with DATABASE_PASSWORD in DATABASE_URL from .env file
@@ -35,6 +37,10 @@ mongoose.connect(Db, {
 
 //ToursData tours[]
 const tours = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/tours-new.json`, 'utf-8'));
+const users = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/users.json`, 'utf-8'));
+const reviews = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/reviews.json`, 'utf-8'));
+
+
 
 
 
@@ -43,7 +49,19 @@ const tours = JSON.parse(fs.readFileSync(`${__dirname}/utils/data/tours-new.json
 //=========================
 const importData = async()=>{
     try{
+        //TOURS
         await Tour.create(tours);
+
+        //USERS
+        //TO import user data(already encrypted password -> comment lines (84-119) in userModel)
+        //turn of password encryption
+        //once data is imported remove comments -> turn on encryption for future passwords encryptions
+        //PASSWORD for all users ins seeder: 'test1234'
+        await User.create(users, {validateBeforeSave:false}); //turnOffValidations(confirmPassword)
+        
+        //REVIEWS
+        await Review.create(reviews);
+        
         console.log('DATA Imported ...'.green.inverse);
     }catch(err){
         console.log(err);
@@ -62,6 +80,8 @@ const importData = async()=>{
 const deleteData = async()=>{
     try{
         await Tour.deleteMany();
+        await User.deleteMany();
+        await Review.deleteMany();
         console.log('DATA Destroyed ...'.red.inverse);
     }catch(err){
         console.log(err);

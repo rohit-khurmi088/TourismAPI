@@ -10,12 +10,27 @@ const User = require('../models/userModel'); //User Model
 //**Common controller functions**
 const {getAll,getOne,updateOne,deleteOne} = require('./handlerFactory'); 
 
+
 //<-------USERS CONTROLLERS(Handlers)------------->
 
 //=====================
 // GET ALL USERS
 //=====================
 exports.getAllUsers = getAll(User);
+
+
+//_________________________________________
+// GET CURRENT USER (Middleware) (PROFILE)
+//_________________________________________
+//use this middleware with getOne(User)- get single user by id 
+//getOne(Model) - takes req.params.id
+//current user id = req.user.id
+//MIDDLEWARE to set req.params.id as req.user.id: use before '/getMe' routes
+exports.getMe = (req,res,next)=>{
+    //set req.params.id as req.user.id
+    req.params.id = req.user.id
+    next()
+}
 
 
 //=======================================

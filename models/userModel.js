@@ -81,6 +81,7 @@ const userSchema = new mongoose.Schema({
 //PRE-SAVE-HOOKS (password Hashing before saving in database)
 //____________________________________________________________
 //this = current document
+
 userSchema.pre('save', async function(next){
     //IF PASSWORD IS not Created/Updated(modified/changed) -> no hasing
     if(!this.isModified('password')) return next();
@@ -116,7 +117,6 @@ userSchema.pre('save', function(next){
 
     next();
 }),
-
 
 //____________________________________________________________
 //PRE-find-HOOKS (DONT SHOW INACTIVE users in the results)

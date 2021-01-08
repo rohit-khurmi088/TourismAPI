@@ -37,7 +37,7 @@ router.use('/:tourId/reviews', reviewRoutes);
 router.route('/tour-stats').get(getTourStats);
 
 //GET Monthly Plan (by year) 
-router.route('/monthly-plan/:year').get(getMonthlyPlan);
+router.route('/monthly-plan/:year').get(checkAuthenticatedUser, restrictTo('admin', 'lead-guide', 'guide'),getMonthlyPlan); //only access by guide,lead-guide,admin
 //------------------------------------------------
 
 //Get Top-5-Cheap-Tours (query)
@@ -47,13 +47,13 @@ router.route('/top-5-cheap').get(aliasTopTours, getAllTours); //CHAINING Middlew
 //-----CHAINING SIMILAR ROUTES (CRUD)-----
 
 router.route('/')
-.get(checkAuthenticatedUser,getAllTours) //only authenticated user => grant access
-.post(createTour)
+.get(getAllTours)
+.post(checkAuthenticatedUser, restrictTo('admin','lead-guide'), createTour) //only admin + lead-guide (authenticated) - create Tour
 
 router.route('/:id')
 .get(getTour)
-.patch(updateTour)
-.delete(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), deleteTour)  //authenticated + based on role['admin','lead-guide']
+.patch(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), updateTour)   //only admin + lead-guide (authenticated) - update Tour
+.delete(checkAuthenticatedUser, restrictTo('admin', 'lead-guide'), deleteTour) //only admin + lead-guide (authenticated) - delete Tour
 
 
 module.exports = router;
