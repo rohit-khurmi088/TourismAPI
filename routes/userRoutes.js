@@ -36,8 +36,8 @@ router.route('/')
 
 router.route('/:id')
 .get(getUser)
-.patch(updateUser) 
-.delete(deleteUser)
+.patch(updateUser)  //only admin - dont't change password here
+.delete(deleteUser) //only admin
 
 
 

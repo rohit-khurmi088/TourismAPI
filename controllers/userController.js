@@ -7,23 +7,15 @@ const errorResponse = require('../middlewares/errorHandler/error'); //error clas
 
 const User = require('../models/userModel'); //User Model
 
+//**Common controller functions**
+const {getAll,getOne,updateOne,deleteOne} = require('./handlerFactory'); 
+
 //<-------USERS CONTROLLERS(Handlers)------------->
 
 //=====================
 // GET ALL USERS
 //=====================
-exports.getAllUsers = asyncHandler(async(req,res,next)=>{
-
-    //Get all users - Model.find()
-    const users = await User.find();
-
-    //Sending Response
-    res.status(200).json({
-        status:'success',
-        results: users.length,
-       data: {users}
-    });
-})
+exports.getAllUsers = getAll(User);
 
 
 //=======================================
@@ -72,9 +64,9 @@ exports.updateMe = asyncHandler(async(req,res,next)=>{
 })
 
 
-//=======================================
-// DELETE the USER (by user)
-//=======================================
+//================================================
+// DELETE the USER (by user) - DEACTIVATE ACCOUNT
+//================================================
 //Eg: delete /api/v1/users/delteMe
 exports.deleteMe = asyncHandler(async(req,res,next)=>{
 
@@ -97,17 +89,13 @@ exports.deleteMe = asyncHandler(async(req,res,next)=>{
 });
 
 
-
-
-
-
 //=====================
 // CREATE NEW USER
 //=====================
 exports.createUser = (req,res)=>{
     res.status(500).json({
         status:'error',
-        message:'This route is not defined yet'
+        message:'This route is not defined! Please Use /signup instead'
     });
 }
 
@@ -115,34 +103,22 @@ exports.createUser = (req,res)=>{
 //=======================
 // GET Single USER by Id
 //=======================
-exports.getUser = (req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not defined yet'
-    });
-}
+exports.getUser = getOne(User);
 
 
 //==========================
 // UPDATE Single USER by Id
 //==========================
-exports.updateUser = (req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not defined yet'
-    });
-}
+//DONT UPDATE PASSWORD HERE
+//only admin
+exports.updateUser = updateOne(User);
 
 
 //==========================
 // DELETE Single USER by Id
 //==========================
-exports.deleteUser = (req,res)=>{
-    res.status(500).json({
-        status:'error',
-        message:'This route is not defined yet'
-    });
-}
+//only admin
+exports.deleteUser = deleteOne(User);
 
 
 

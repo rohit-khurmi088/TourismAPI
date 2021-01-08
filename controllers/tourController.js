@@ -3,12 +3,12 @@
 
 //_____ FILE IMPORTS________
 const asyncHandler = require('../middlewares/asyncHandler'); //Global_asyncHandler
-const errorResponse = require('../middlewares/errorHandler/error'); //error class
-
-const APIFeatures = require('../utils/queryFeaturesAPI'); //queryAPIFeatures (methods)
+//const errorResponse = require('../middlewares/errorHandler/error'); //error class
 
 const Tour = require('../models/tourModel'); //Tour Model
 
+//**Common controller functions**
+const {getAll, createOne,getOne,updateOne,deleteOne} = require('./handlerFactory'); 
 
 //=====================
 // MIDDLEWARES
@@ -39,136 +39,33 @@ exports.aliasTopTours = (req,res,next)=>{
 //=====================
 // GET ALL TOURS
 //=====================
-exports.getAllTours = asyncHandler(async(req,res,next)=>{
-    
-    //_____CHAINING QUERY using Methods from queryFeaturesAPI_____
-    //class = APIFeatures
-    //constructor(mongoose_query, express_query);
-    //quey = mongoose Query = Model.find()
-    //queryString = express Query = req.query
-    //features return -> this => query object
-    const features = new APIFeatures(Tour.find(),req.query)
-    .filter()
-    .sort()
-    .limitFields()
-    .paginate();
-
-
-    //EXCUTING QUERY
-    const tours = await features.query;
-
-    //SENDING RESPONSE - get tours
-    res.status(200).json({
-        status:'success',
-        results: tours.length,
-        data: {tours:tours}
-    });
-})
-
+exports.getAllTours = getAll(Tour);
 
 
 //=====================
 // CREATE NEW TOUR
 //=====================
-exports.createTour = asyncHandler(async(req,res,next)=>{
-    //const newTour = new Tour({tour_fields});
-    //newTour.save();
-
-    //Model.create(req.body) - create new entity
-    const newTour = await Tour.create(req.body);
-
-    //Sending response - tour created
-    res.status(201).json({
-        status:'success',
-        data: {tours: newTour}
-    });
-})
-
+exports.createTour = createOne(Tour);
 
 
 //=======================
 // GET Single TOUR by Id
 //=======================
-exports.getTour = asyncHandler(async(req,res,next)=>{
-     
-    //Model.findById(req.params.id) OR Model.findOne({_id: req.params.id}) - find element by id
-    //const tour = await Tour.findById(req.params.id);
-
-    //using populate() -> creates a new query which might affect our application
-    //POPULATING tours - 'guides' data(as ref from user model)
-    //const tour = await Tour.findById(req.params.id).populate('guides');
-    //select only certian fields to show using populate (- => exclude fields)
-    /*const tour = await Tour.findById(req.params.id).populate({
-        path:'guides',                              //ref data
-        select:'-__v -passwordChangedAt -password' //excluded fields
-    });*/
-    //using this with every /^find/ => code repetition
-    //Instead of this to populate all queries (/^find/ -> use query middleware(tourModel))
-
-    //POPULATING 'reviews' on tour(used virtual Properties)
-    const tour = await Tour.findById(req.params.id).populate('reviews');
-
-    //If tour is not found
-    if(!tour){
-        //errorResponse
-        return next(new errorResponse('No tour found with that Id',404));
-    }
-
-    //Send Response - tour found
-    res.status(200).json({
-        status:'success',
-        data: tour
-    });
-})
-
+//POPULATING 'reviews' on tour(used virtual Properties)
+//const tour = await Tour.findById(req.params.id).populate('reviews');
+exports.getTour = getOne(Tour,{ path:'reviews' });
 
 
 //==========================
 // UPDATE Single TOUR by Id
 //==========================
-exports.updateTour = asyncHandler(async(req,res,next)=>{
-
-     //_____PUT VS PATCH_____
-    //PATCH: replaces the fields that are different(modifies)
-    //PUT: replaces the complete object(original Object)
-
-    //Model.findByIdAndUpdate(req.params.id,req.body,{new:true, runValidators:true}) - find & update element by id
-    const tour = await Tour.findByIdAndUpdate(req.params.id, req.body ,{new:true, runValidators:true});
-
-    //if tour is not found 
-    if(!tour){
-        //errorResponse
-        return next(new errorResponse('No tour found with that Id',404));
-    }
-
-    //Send Response - tour is updated
-    res.status(200).json({
-        status:'success',
-        data:tour
-    });
-})
-
+exports.updateTour = updateOne(Tour);
 
 
 //==========================
 // DELETE Single TOUR by Id
 //==========================
-exports.deleteTour = asyncHandler(async(req,res,next)=>{
-    
-    //Model.findByIdAndDelete - delete tour by id
-    const tour = await Tour.findByIdAndDelete(req.params.id);
-
-    if(!tour){
-        //errorResponse
-        return next(new errorResponse('No tour found with that Id',404));
-    }
-
-    //Send Resonse - tour id deleted
-    res.status(204).json({
-        status:'success',
-        data:null //No data is send for delete request
-    });
-})
+exports.deleteTour = deleteOne(Tour);
 
 
 

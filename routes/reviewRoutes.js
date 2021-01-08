@@ -4,7 +4,10 @@ const router = express.Router({ mergeParams: true }); //allows to merge review i
 //importing auth middleware from authController
 const {checkAuthenticatedUser, restrictTo} = require('../controllers/authController');
  
-//importing functions from userController(Destructuring)
+//importing Middleware from ReviewController
+const {setTourUserIds} = require('../controllers/reviewController');
+
+//importing functions from ReviewController(Destructuring)
 const {getAllReviews,createReview,getReview,updateReview,deleteReview} = require('../controllers/reviewController');
 
 
@@ -17,11 +20,11 @@ const {getAllReviews,createReview,getReview,updateReview,deleteReview} = require
 
 router.route('/')
 .get(getAllReviews)
-.post(checkAuthenticatedUser,restrictTo('user'), createReview) //only LoggedIn role='user'(not admin or guides) can create review
+.post(checkAuthenticatedUser,restrictTo('user'),setTourUserIds, createReview,) //only LoggedIn role='user'(not admin or guides) can create review
 
 router.route('/:id')
 .get(getReview)
 .patch(updateReview)    
-.delete(deleteReview)   
+.delete(deleteReview)    
 
 module.exports = router;
