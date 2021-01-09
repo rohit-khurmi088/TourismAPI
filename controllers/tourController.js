@@ -3,7 +3,7 @@
 
 //_____ FILE IMPORTS________
 const asyncHandler = require('../middlewares/asyncHandler'); //Global_asyncHandler
-//const errorResponse = require('../middlewares/errorHandler/error'); //error class
+const errorResponse = require('../middlewares/errorHandler/error'); //error class
 
 const Tour = require('../models/tourModel'); //Tour Model
 
@@ -168,4 +168,111 @@ exports.getMonthlyPlan = asyncHandler(async(req,res,next)=>{
         status: 'success',
         data: {plan}
     });
+})
+
+
+
+
+//=======================
+// GEOSPATIAL QUERY 
+//=======================
+//-> Provides search functionality for tours within certain distance of a specified point
+//-> in geoJSON data -> lng,lat (define longitude 1st, then latitude)
+//I) To find tours within radius ($geoWithin)
+//II) To find distances of all tours from certain point ($geoNear)
+//-> radius : radians
+//-> for geoJson Data : Create a special 2dsphere index 
+
+//=======================================================
+// I) Show Tours within certain distance (GEOSPATIAL QUERY)
+//=======================================================
+//GEO_SPATIAL QUERY WITHIN RADIUS
+//Route: '/tours-within/:distance/center/:latlng/unit/:unit'
+//Eg: /tours-within/223/center/34.149781105328685, -118.10402585535664/unit/mi (km= kilometers, mi = miles)
+exports.getToursWithin =  asyncHandler(async(req,res,next)=>{
+
+    const {distance,latlng,unit} = req.params;
+
+    //latlong = lat,long -> get individual fields
+    //lat = latitude, lng = longitude
+    const [lat,lng] = latlng.split(',');
+
+    //::::: GEOSPATIAL Query Within Radius :::::
+    //{ $geoWithin: { $centerSphere: [[lng,lat], radius] }}
+    //radius in radians
+    //distance to radians => distance/radius of earth(3,963 mi / 6,378 Km)
+    const radius = unit === 'mi'? distance/3963.2 : distance/6378.1  
+
+    //if latitude & longitude is not present
+    if(!lat || !lng){
+        //errorResponse
+        next(new errorResponse('Please provide latitude & longitude in format lat,lng',400));
+    }
+    //console.log(distance,lat,lng,unit);
+
+    const tours = await Tour.find({
+        startLocation: { $geoWithin: { $centerSphere: [[lng,lat], radius] }}
+    });
+    
+    //SENDING Response
+    res.status(200).json({
+        status:'success',
+        results:tours.length,
+        data: {data: tours}
+    });
+})
+
+
+
+//==========================================================================================
+// II) Calculate Distances to all the tours from a certain point (GEOSPATIAL Aggregation QUERY)
+//==========================================================================================
+//GEO_SPATIAL QUERY WITHIN DISTANCE
+//Eg:'/distances/:latlng/unit/:unit'
+exports.getDistances = asyncHandler(async(req,res,next)=>{
+
+    const {latlng,unit} = req.params;
+    //latlong = lat,long -> get individual fields
+    //lat = latitude, lng = longitude
+    const [lat,lng] = latlng.split(',');
+
+    //if latitude & longitude is not present
+    if(!lat || !lng){
+        //errorResponse
+        next(new errorResponse('Please provide latitude & longitude in format lat,lng',400));
+    }
+    //console.log(distance,lat,lng,unit);
+
+    //::::: GEOSPATIAL AGGREGATION ::::: ($geoNear - 1st stage)
+    //Calculate Distances to all the tours from a certain point
+    //to use $geoNear , there should be 1 field with geoSpatialIndex
+    //tourSchema.index({ startLocation: '2dsphere' }); defined on tourModel
+    //In this case we have 1 field - $geoNear - will automatically take that field for calculation
+    //If we have > 1 fields then we need to define which index to use
+
+    // 1m = 0.000621371 miles
+    //converting sekecting multiplier (multiplier * distance = units)
+    const multiplier = unit === 'mi'? 0.000621371 : 0.001
+
+    const distances = await Tour.aggregate([
+        //"$geoNear is only valid as the first stage in a pipeline."
+        //near: from which point to calculate distances to other points
+        //distanceFields: field that will be created & where all the calculated distances will be stored
+        //distanceMultiplier: number to multiply wiht distance to convert distance in required units
+        {
+            $geoNear: {
+                near:{ type:'Point', coordinates: [lng * 1, lat * 1] },   //convert lng,lat to numbers (string * number = number)
+                distanceField: 'distance',                               //shows distance in meters
+                distanceMultiplier: multiplier                          //number to multiply with distance
+            }
+        },
+        //show only Tour name & distance
+        {$project: { distance:1, name:1 }}
+    ]);
+  
+    //SENDING Response
+    res.status(200).json({
+        status:'success',
+        data: { data: distances}
+    }); 
 })

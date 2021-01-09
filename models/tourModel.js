@@ -158,6 +158,9 @@ const tourSchema = new mongoose.Schema({
 tourSchema.index({ price:1, ratingsAverage:-1 }); //compoundIndex
 tourSchema.index({ slug:1 });
 
+//for geoJSON Data : Create a special 2dsphere index 
+tourSchema.index({ startLocation: '2dsphere' });
+
 //====================
 //virtual Property
 //====================
@@ -248,16 +251,16 @@ tourSchema.post(/^find/, function(docs, next){
 //this = current aggregation
 
 //Exclude SECRET TOURS from the aggregation Pipeline
-tourSchema.pre('aggregate', function(next){
+//tourSchema.pre('aggregate', function(next){
 
     //console.log(this); //Agregate{}
     //console.log(this.pipeline); //Aggreage Pipeline Object
     
     //unshift(): add an element at the beginning of the array
-    this.pipeline().unshift({$match:{secretTour:{$ne:true}}});
+    //this.pipeline().unshift({$match:{secretTour:{$ne:true}}});
 
-    next();
-})
+    //next();
+//})
 
 //==============================================
 

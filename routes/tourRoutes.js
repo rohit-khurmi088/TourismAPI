@@ -11,6 +11,9 @@ const {getTourStats,getMonthlyPlan} = require('../controllers/tourController');
 //Importing Middleware from tourController (Top-5-Tours)
 const {aliasTopTours} = require('../controllers/tourController');
 
+//Importing GeoSpatial controller form tourController
+const {getToursWithin,getDistances} = require('../controllers/tourController');
+
 //Importing controllers from tourController (CRUD)
 const {getAllTours, getTour, createTour, updateTour, deleteTour} = require('../controllers/tourController');
 
@@ -44,6 +47,23 @@ router.route('/monthly-plan/:year').get(checkAuthenticatedUser, restrictTo('admi
 router.route('/top-5-cheap').get(aliasTopTours, getAllTours); //CHAINING Middleware
 
 //------------------------------------------------
+
+
+//------------------ GEOSPATIAL Query Routes --------------------------------------------
+//=======================================================
+// Show Tours within certain distance (GEOSPATIAL QUERY)
+//=======================================================
+//GEO_SPATIAL QUERY WITHIN RADIUS
+//Eg: /tours-within/221/center/34.149781105328685, -118.10402585535664/unit/mi (mi = miles)
+router.route('/tours-within/:distance/center/:latlng/unit/:unit').get(getToursWithin);
+
+//==========================================================================================
+// Calculate Distances to all the tours from a certain point (GEOSPATIAL Aggregation QUERY)
+//==========================================================================================
+router.route('/distances/:latlng/unit/:unit').get(getDistances);
+
+
+//-----------------------------------------------------------------------------------------
 //-----CHAINING SIMILAR ROUTES (CRUD)-----
 
 router.route('/')
