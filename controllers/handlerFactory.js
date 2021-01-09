@@ -34,6 +34,8 @@ exports.getAll = (Model) => asyncHandler(async(req,res,next) =>{
 
 
     //EXCUTING QUERY
+    //to check read performance using indexes - explain()
+    //const docs = await features.query.explain();
     const docs = await features.query;
 
     //SENDING RESPONSE - get tours

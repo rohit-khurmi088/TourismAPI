@@ -1,0 +1,50 @@
+//==================
+// MONGODB INDEXES
+//==================
+-> In any database, indexes support the efficient execution of queries. Without them, the database must scan every document in a collection or table to select those that match the query statement. If an appropriate index exists for a query, the database can use the index to limit the number of documents it must inspect.
+
+-> Indexes makes read performance on our database better
+https://www.mongodb.com/blog/post/performance-best-practices-indexing
+
+DEFAULT INDEXING = _id 
+
+Eg:
+{{URL}}/api/v1/tours?price[lte]=1000
+
+GET all tours
+const docs = await features.query.explain();
+
+explain() - gives query search details
+scanned - 9 docs 
+results - 3 docs
+
+::::: tourModel :::::
+//_____ INDEXING ___________
+//1 = ascending , -1 = descending
+//tourSchema.index({price:1}); //simpleIndex
+tourSchema.index({price:1, ratingsAverage:-1}); //compoundIndex
+
+
+scanned - 3 docs 
+results - 3 docs
+-> more efficient + faster
+
+::::: review Model :::::
+1 user = 1 review on 1 tour
+Each user should be able to write only single review on a given tour
+-> use unique index
+but tour: unique user:unique = wrong 
+    - that would mean each user could write only 1 review
+    - each tour could get 1 review
+Here we need combination of tour + user -> unique (Compound Index)
+reviewSchema.index({ tour:1, user:1 }, { unique:true });
+
+-> Indexes may take time to work in the database
+-> To remove index from the code DELETE it from the database
+
+//==================
+// Static methods
+//==================
+-> instance methods - called on schema (this = current schema)
+-> static methods - called on model directly + schema (this = current model)
+
